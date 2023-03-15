@@ -33,7 +33,7 @@ jobs:
       
     - name: Test
       working-directory: ${{github.workspace}}/build
-      run: ./bin/${{env.BUILD_TYPE}}/unit_test
+      run: ./bin/${{env.BUILD_TYPE}}/test
 
   build-ubuntu:
     name: ubuntu
@@ -57,7 +57,7 @@ jobs:
 
     - name: Test
       working-directory: ${{github.workspace}}/build
-      run: ./bin/unit_test
+      run: ./bin/test
 
   build-macos:
     name: macos
@@ -76,4 +76,4 @@ jobs:
 
     - name: Test
       working-directory: ${{github.workspace}}/build
-      run: ./bin/unit_test
+      run: ./bin/test
