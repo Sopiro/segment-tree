@@ -26,15 +26,19 @@ public:
 
     T Query(size_t left, size_t right) const;
     void Update(size_t index, T newValue);
+    void Insert(size_t index, T value);
+    void PushBack(T value);
 
     T operator[](size_t index) const;
 
+    size_t GetCount() const;
     const T* GetTree() const;
     size_t GetTreeSize() const;
 
 private:
     T* tree;
     Combine* combineFcn;
+    size_t count;
     size_t size;
     T noneValue;
 };
@@ -42,17 +46,17 @@ private:
 template <typename T>
 SegmentTree<T>::SegmentTree(std::span<T> _data, Combine* _combineFcn, T _noneValue)
     : combineFcn{ _combineFcn }
+    , count{ _data.size() }
     , size{ compute_size(_data.size()) }
     , noneValue{ _noneValue }
 {
     tree = new T[size];
     tree[0] = noneValue;
 
-    size_t n = _data.size();
     size_t mid = size / 2;
     size_t i = 0;
 
-    for (; i < n; ++i)
+    for (; i < count; ++i)
     {
         tree[mid + i] = _data[i];
     }
@@ -118,6 +122,93 @@ void SegmentTree<T>::Update(size_t index, T newValue)
         tree[parentIndex] = combineFcn(tree[left(parentIndex)], tree[right(parentIndex)]);
         i = parentIndex;
     }
+}
+
+template <typename T>
+void SegmentTree<T>::Insert(size_t index, T value)
+{
+    assert(0 <= index && index <= size / 2);
+
+    if (count == size / 2)
+    {
+        T* old = tree;
+        tree = new T[size * 2];
+        tree[0] = noneValue;
+
+        memcpy(tree + size, old + size / 2, size / 2 * sizeof(T));
+
+        for (size_t i = 0; i < size / 2; ++i)
+        {
+            tree[size + size / 2 + i] = noneValue;
+        }
+
+        delete[] old;
+
+        size *= 2;
+    }
+
+    size_t mid = size / 2;
+    size_t ptr = count;
+
+    while (index != ptr)
+    {
+        tree[mid + ptr] = tree[mid + ptr - 1];
+        --ptr;
+    }
+
+    tree[mid + index] = value;
+    ++count;
+
+    size_t i = mid - 1;
+    while (i > 0)
+    {
+        tree[i] = combineFcn(tree[left(i)], tree[right(i)]);
+        --i;
+    }
+}
+
+template <typename T>
+void SegmentTree<T>::PushBack(T value)
+{
+    if (count == size / 2)
+    {
+        T* old = tree;
+        tree = new T[size * 2];
+        tree[0] = noneValue;
+
+        memcpy(tree + size, old + size / 2, size / 2 * sizeof(T));
+
+        for (size_t i = 0; i < size / 2; ++i)
+        {
+            tree[size + size / 2 + i] = noneValue;
+        }
+
+        delete[] old;
+
+        size *= 2;
+
+        size_t mid = size / 2;
+        tree[mid + count] = value;
+        ++count;
+
+        size_t i = mid - 1;
+        while (i > 0)
+        {
+            tree[i] = combineFcn(tree[left(i)], tree[right(i)]);
+            --i;
+        }
+
+        return;
+    }
+
+    Update(count, value);
+    ++count;
+}
+
+template <typename T>
+size_t SegmentTree<T>::GetCount() const
+{
+    return count;
 }
 
 template <typename T>

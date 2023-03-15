@@ -136,3 +136,61 @@ TEST_CASE("Query")
     REQUIRE_EQ(tree.Query(0, 7), 30);
     REQUIRE_EQ(tree.Query(3, 4), 3);
 }
+
+TEST_CASE("Insert 1")
+{
+    int data[8] = { 5, 8, 4, 3, 7, 2, 1, 6 };
+    SegmentTree<int> tree{ data, Combine, 0 };
+
+    tree.Insert(3, 9);
+
+    const int* p = tree.GetTree();
+
+    REQUIRE_EQ(p[0], 0);
+    REQUIRE_EQ(p[1], 45);
+    REQUIRE_EQ(p[2], 39);
+    REQUIRE_EQ(p[3], 6);
+    REQUIRE_EQ(p[4], 26);
+    REQUIRE_EQ(p[5], 13);
+    REQUIRE_EQ(p[6], 6);
+    REQUIRE_EQ(p[7], 0);
+    REQUIRE_EQ(p[8], 13);
+    REQUIRE_EQ(p[9], 13);
+    REQUIRE_EQ(p[10], 10);
+    REQUIRE_EQ(p[11], 3);
+    REQUIRE_EQ(p[12], 6);
+    REQUIRE_EQ(p[13], 0);
+    REQUIRE_EQ(p[14], 0);
+    REQUIRE_EQ(p[15], 0);
+    REQUIRE_EQ(p[16], 5);
+    REQUIRE_EQ(p[17], 8);
+    REQUIRE_EQ(p[18], 4);
+    REQUIRE_EQ(p[19], 9);
+    REQUIRE_EQ(p[20], 3);
+    REQUIRE_EQ(p[21], 7);
+    REQUIRE_EQ(p[22], 2);
+    REQUIRE_EQ(p[23], 1);
+    REQUIRE_EQ(p[24], 6);
+    REQUIRE_EQ(p[25], 0);
+    REQUIRE_EQ(p[26], 0);
+    REQUIRE_EQ(p[27], 0);
+    REQUIRE_EQ(p[28], 0);
+    REQUIRE_EQ(p[29], 0);
+    REQUIRE_EQ(p[30], 0);
+    REQUIRE_EQ(p[31], 0);
+}
+
+TEST_CASE("Insert 2")
+{
+    int data[8] = { 5, 8, 4, 3, 7, 2, 1, 6 };
+    SegmentTree<int> tree1{ data, Combine, 0 };
+    SegmentTree<int> tree2{ data, Combine, 0 };
+
+    tree1.Insert(8, 123);
+    tree2.PushBack(123);
+
+    for (int i = 0; i < tree1.GetTreeSize(); ++i)
+    {
+        REQUIRE_EQ(tree1.GetTree()[i], tree2.GetTree()[i]);
+    }
+}
