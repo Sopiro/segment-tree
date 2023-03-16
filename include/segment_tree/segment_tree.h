@@ -14,7 +14,8 @@ inline size_t compute_size(size_t n)
     return static_cast<size_t>(pow(2, exp));
 }
 
-// Tree starts from index 1, and nonValue is stored in the first
+// NonValue is stored in the first
+// Tree starts from index 1
 template <typename T>
 class SegmentTree
 {
@@ -23,6 +24,11 @@ class SegmentTree
 public:
     SegmentTree(std::span<T> data, Combine* combineFcn, T noneValue);
     ~SegmentTree();
+
+    SegmentTree(const SegmentTree& other);
+    SegmentTree& operator=(const SegmentTree& other);
+    SegmentTree(SegmentTree&& other);
+    SegmentTree& operator=(SegmentTree&& other);
 
     T Query(size_t left, size_t right) const;
     void Update(size_t index, T newValue);
@@ -75,13 +81,81 @@ SegmentTree<T>::SegmentTree(std::span<T> _data, Combine* _combineFcn, T _noneVal
 }
 
 template <typename T>
-SegmentTree<T>::~SegmentTree()
+inline SegmentTree<T>::~SegmentTree()
 {
     delete[] tree;
 }
 
 template <typename T>
-T SegmentTree<T>::Query(size_t left, size_t right) const
+inline SegmentTree<T>::SegmentTree(const SegmentTree& other)
+{
+    combineFcn = other.combineFcn;
+    count = other.count;
+    size = other.size;
+    noneValue = other.noneValue;
+
+    tree = new T[size];
+    memcpy(tree, other.tree, size * sizeof(T));
+}
+
+template <typename T>
+SegmentTree<T>& SegmentTree<T>::operator=(const SegmentTree& other)
+{
+    if (this != &other)
+    {
+        delete[] tree;
+
+        combineFcn = other.combineFcn;
+        count = other.count;
+        size = other.size;
+        noneValue = other.noneValue;
+
+        tree = new T[size];
+        memcpy(tree, other.tree, size * sizeof(T));
+    }
+
+    return *this;
+}
+
+template <typename T>
+inline SegmentTree<T>::SegmentTree(SegmentTree&& other)
+{
+    tree = other.tree;
+    combineFcn = other.combineFcn;
+    count = other.count;
+    size = other.size;
+    noneValue = other.noneValue;
+
+    other.tree = nullptr;
+    other.combineFcn = nullptr;
+    other.count = 0;
+    other.size = 0;
+}
+
+template <typename T>
+SegmentTree<T>& SegmentTree<T>::operator=(SegmentTree&& other)
+{
+    if (this != &other)
+    {
+        delete[] tree;
+
+        tree = other.tree;
+        combineFcn = other.combineFcn;
+        count = other.count;
+        size = other.size;
+        noneValue = other.noneValue;
+
+        other.tree = nullptr;
+        other.combineFcn = nullptr;
+        other.count = 0;
+        other.size = 0;
+    }
+
+    return *this;
+}
+
+template <typename T>
+inline T SegmentTree<T>::Query(size_t left, size_t right) const
 {
     assert(left < right);
 
@@ -110,7 +184,7 @@ T SegmentTree<T>::Query(size_t left, size_t right) const
 }
 
 template <typename T>
-void SegmentTree<T>::Update(size_t index, T newValue)
+inline void SegmentTree<T>::Update(size_t index, T newValue)
 {
     size_t i = size / 2 + index;
 
@@ -125,7 +199,7 @@ void SegmentTree<T>::Update(size_t index, T newValue)
 }
 
 template <typename T>
-void SegmentTree<T>::Insert(size_t index, T value)
+inline void SegmentTree<T>::Insert(size_t index, T value)
 {
     assert(0 <= index && index <= size / 2);
 
@@ -168,7 +242,7 @@ void SegmentTree<T>::Insert(size_t index, T value)
 }
 
 template <typename T>
-void SegmentTree<T>::PushBack(T value)
+inline void SegmentTree<T>::PushBack(T value)
 {
     if (count == size / 2)
     {
@@ -206,25 +280,25 @@ void SegmentTree<T>::PushBack(T value)
 }
 
 template <typename T>
-size_t SegmentTree<T>::GetCount() const
+inline size_t SegmentTree<T>::GetCount() const
 {
     return count;
 }
 
 template <typename T>
-const T* SegmentTree<T>::GetTree() const
+inline const T* SegmentTree<T>::GetTree() const
 {
     return tree;
 }
 
 template <typename T>
-size_t SegmentTree<T>::GetTreeSize() const
+inline size_t SegmentTree<T>::GetTreeSize() const
 {
     return size;
 }
 
 template <typename T>
-T SegmentTree<T>::operator[](size_t index) const
+inline T SegmentTree<T>::operator[](size_t index) const
 {
     return tree[size / 2 + index];
 }

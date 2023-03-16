@@ -194,3 +194,140 @@ TEST_CASE("Insert 2")
         REQUIRE_EQ(tree1.GetTree()[i], tree2.GetTree()[i]);
     }
 }
+
+TEST_CASE("Copy ctor")
+{
+    int data[8] = { 5, 8, 4, 3, 7, 2, 1, 6 };
+    const SegmentTree<int> tree1{ data, Combine, 0 };
+    SegmentTree<int> tree2{ tree1 };
+
+    REQUIRE_EQ(tree1.GetCount(), tree2.GetCount());
+    REQUIRE_EQ(tree1.GetTreeSize(), tree2.GetTreeSize());
+    REQUIRE_NE(tree1.GetTree(), tree2.GetTree());
+
+    for (int i = 0; i < tree1.GetTreeSize(); ++i)
+    {
+        REQUIRE_EQ(tree1.GetTree()[i], tree2.GetTree()[i]);
+    }
+}
+
+TEST_CASE("Copy assign")
+{
+    int data[8] = { 5, 8, 4, 3, 7, 2, 1, 6 };
+    int data2[4] = { 1, 2, 3, 4 };
+    const SegmentTree<int> tree1{ data, Combine, 0 };
+    SegmentTree<int> tree2{ data2, Combine, 0 };
+
+    const int* p = tree2.GetTree();
+
+    REQUIRE_EQ(p[0], 0);
+    REQUIRE_EQ(p[1], 10);
+    REQUIRE_EQ(p[2], 3);
+    REQUIRE_EQ(p[3], 7);
+    REQUIRE_EQ(p[4], 1);
+    REQUIRE_EQ(p[5], 2);
+    REQUIRE_EQ(p[6], 3);
+    REQUIRE_EQ(p[7], 4);
+
+    tree2 = tree1;
+
+    p = tree2.GetTree();
+    REQUIRE_EQ(p[0], 0);
+    REQUIRE_EQ(p[1], 36);
+    REQUIRE_EQ(p[2], 20);
+    REQUIRE_EQ(p[3], 16);
+    REQUIRE_EQ(p[4], 13);
+    REQUIRE_EQ(p[5], 7);
+    REQUIRE_EQ(p[6], 9);
+    REQUIRE_EQ(p[7], 7);
+    REQUIRE_EQ(p[8], 5);
+    REQUIRE_EQ(p[9], 8);
+    REQUIRE_EQ(p[10], 4);
+    REQUIRE_EQ(p[11], 3);
+    REQUIRE_EQ(p[12], 7);
+    REQUIRE_EQ(p[13], 2);
+    REQUIRE_EQ(p[14], 1);
+    REQUIRE_EQ(p[15], 6);
+
+    REQUIRE_EQ(tree1.GetCount(), tree2.GetCount());
+    REQUIRE_EQ(tree1.GetTreeSize(), tree2.GetTreeSize());
+    REQUIRE_NE(tree1.GetTree(), tree2.GetTree());
+
+    for (int i = 0; i < tree1.GetTreeSize(); ++i)
+    {
+        REQUIRE_EQ(tree1.GetTree()[i], tree2.GetTree()[i]);
+    }
+}
+
+TEST_CASE("Move ctor")
+{
+    int data[8] = { 5, 8, 4, 3, 7, 2, 1, 6 };
+    SegmentTree<int> tree1{ data, Combine, 0 };
+    SegmentTree<int> tree2{ std::move(tree1) };
+
+    REQUIRE_EQ(tree1.GetCount(), 0);
+    REQUIRE_EQ(tree1.GetTreeSize(), 0);
+    REQUIRE_EQ(tree1.GetTree(), nullptr);
+
+    const int* p = tree2.GetTree();
+
+    REQUIRE_EQ(p[0], 0);
+    REQUIRE_EQ(p[1], 36);
+    REQUIRE_EQ(p[2], 20);
+    REQUIRE_EQ(p[3], 16);
+    REQUIRE_EQ(p[4], 13);
+    REQUIRE_EQ(p[5], 7);
+    REQUIRE_EQ(p[6], 9);
+    REQUIRE_EQ(p[7], 7);
+    REQUIRE_EQ(p[8], 5);
+    REQUIRE_EQ(p[9], 8);
+    REQUIRE_EQ(p[10], 4);
+    REQUIRE_EQ(p[11], 3);
+    REQUIRE_EQ(p[12], 7);
+    REQUIRE_EQ(p[13], 2);
+    REQUIRE_EQ(p[14], 1);
+    REQUIRE_EQ(p[15], 6);
+}
+
+TEST_CASE("Move assign")
+{
+    int data[8] = { 5, 8, 4, 3, 7, 2, 1, 6 };
+    int data2[4] = { 1, 2, 3, 4 };
+    SegmentTree<int> tree1{ data, Combine, 0 };
+    SegmentTree<int> tree2{ data2, Combine, 0 };
+
+    const int* p = tree2.GetTree();
+
+    REQUIRE_EQ(p[0], 0);
+    REQUIRE_EQ(p[1], 10);
+    REQUIRE_EQ(p[2], 3);
+    REQUIRE_EQ(p[3], 7);
+    REQUIRE_EQ(p[4], 1);
+    REQUIRE_EQ(p[5], 2);
+    REQUIRE_EQ(p[6], 3);
+    REQUIRE_EQ(p[7], 4);
+
+    tree2 = std::move(tree1);
+
+    REQUIRE_EQ(tree1.GetCount(), 0);
+    REQUIRE_EQ(tree1.GetTreeSize(), 0);
+    REQUIRE_EQ(tree1.GetTree(), nullptr);
+
+    p = tree2.GetTree();
+    REQUIRE_EQ(p[0], 0);
+    REQUIRE_EQ(p[1], 36);
+    REQUIRE_EQ(p[2], 20);
+    REQUIRE_EQ(p[3], 16);
+    REQUIRE_EQ(p[4], 13);
+    REQUIRE_EQ(p[5], 7);
+    REQUIRE_EQ(p[6], 9);
+    REQUIRE_EQ(p[7], 7);
+    REQUIRE_EQ(p[8], 5);
+    REQUIRE_EQ(p[9], 8);
+    REQUIRE_EQ(p[10], 4);
+    REQUIRE_EQ(p[11], 3);
+    REQUIRE_EQ(p[12], 7);
+    REQUIRE_EQ(p[13], 2);
+    REQUIRE_EQ(p[14], 1);
+    REQUIRE_EQ(p[15], 6);
+}
