@@ -14,8 +14,8 @@ inline size_t compute_size(size_t n)
     return static_cast<size_t>(pow(2, exp));
 }
 
-// NonValue is stored in the first
-// Tree starts from index 1
+// Templated class implementation of a segment tree,
+// which is a commonly used data structure for efficient range queries on arrays.
 template <typename T>
 class SegmentTree
 {
@@ -23,12 +23,13 @@ class SegmentTree
 
 public:
     SegmentTree(std::span<T> data, Combine* combineFcn, T noneValue);
-    ~SegmentTree();
+    SegmentTree(std::initializer_list<T> data, Combine* combineFcn, T noneValue);
+    ~SegmentTree() noexcept;
 
     SegmentTree(const SegmentTree& other);
     SegmentTree& operator=(const SegmentTree& other);
-    SegmentTree(SegmentTree&& other);
-    SegmentTree& operator=(SegmentTree&& other);
+    SegmentTree(SegmentTree&& other) noexcept;
+    SegmentTree& operator=(SegmentTree&& other) noexcept;
 
     T Query(size_t left, size_t right) const;
     void Update(size_t index, T newValue);
@@ -42,15 +43,26 @@ public:
     size_t GetTreeSize() const;
 
 private:
+    // Internal tree array
+    // Root starts from index 1
+    // nonValue is stored in the first element
     T* tree;
+
+    // Combine function
     Combine* combineFcn;
+
+    // Count of original elements in the tree
     size_t count;
+
+    // Size of the segment tree array
     size_t size;
+
+    // Default value for uninitialized elements in the tree
     T noneValue;
 };
 
 template <typename T>
-SegmentTree<T>::SegmentTree(std::span<T> _data, Combine* _combineFcn, T _noneValue)
+inline SegmentTree<T>::SegmentTree(std::span<T> _data, Combine* _combineFcn, T _noneValue)
     : combineFcn{ _combineFcn }
     , count{ _data.size() }
     , size{ compute_size(_data.size()) }
@@ -81,7 +93,38 @@ SegmentTree<T>::SegmentTree(std::span<T> _data, Combine* _combineFcn, T _noneVal
 }
 
 template <typename T>
-inline SegmentTree<T>::~SegmentTree()
+inline SegmentTree<T>::SegmentTree(std::initializer_list<T> _data, Combine* _combineFcn, T _noneValue)
+    : combineFcn{ _combineFcn }
+    , count{ _data.size() }
+    , size{ compute_size(_data.size()) }
+    , noneValue{ _noneValue }
+{
+    tree = new T[size];
+    tree[0] = noneValue;
+
+    size_t mid = size / 2;
+    size_t i = 0;
+
+    for (; i < count; ++i)
+    {
+        tree[mid + i] = *(_data.begin() + i);
+    }
+
+    for (i += mid; i < size; ++i)
+    {
+        tree[i] = noneValue;
+    }
+
+    i = mid - 1;
+    while (i > 0)
+    {
+        tree[i] = combineFcn(tree[left(i)], tree[right(i)]);
+        --i;
+    }
+}
+
+template <typename T>
+inline SegmentTree<T>::~SegmentTree() noexcept
 {
     delete[] tree;
 }
@@ -99,7 +142,7 @@ inline SegmentTree<T>::SegmentTree(const SegmentTree& other)
 }
 
 template <typename T>
-SegmentTree<T>& SegmentTree<T>::operator=(const SegmentTree& other)
+inline SegmentTree<T>& SegmentTree<T>::operator=(const SegmentTree& other)
 {
     if (this != &other)
     {
@@ -118,7 +161,7 @@ SegmentTree<T>& SegmentTree<T>::operator=(const SegmentTree& other)
 }
 
 template <typename T>
-inline SegmentTree<T>::SegmentTree(SegmentTree&& other)
+inline SegmentTree<T>::SegmentTree(SegmentTree&& other) noexcept
 {
     tree = other.tree;
     combineFcn = other.combineFcn;
@@ -133,7 +176,7 @@ inline SegmentTree<T>::SegmentTree(SegmentTree&& other)
 }
 
 template <typename T>
-SegmentTree<T>& SegmentTree<T>::operator=(SegmentTree&& other)
+inline SegmentTree<T>& SegmentTree<T>::operator=(SegmentTree&& other) noexcept
 {
     if (this != &other)
     {
@@ -159,28 +202,29 @@ inline T SegmentTree<T>::Query(size_t left, size_t right) const
 {
     assert(left < right);
 
-    T result = noneValue;
+    left += size / 2;
+    right += size / 2 - 1;
 
-    size_t leafLeft = size / 2 + left;
-    size_t leafRight = size / 2 + right - 1;
+    T leftValue = noneValue;
+    T rightValue = noneValue;
 
-    while (leafLeft <= leafRight)
+    while (left <= right)
     {
-        if (leafLeft % 2 == 1)
+        if (left & 1)
         {
-            result = combineFcn(tree[leafLeft], result);
+            leftValue = combineFcn(leftValue, tree[left]);
         }
 
-        if (leafRight % 2 == 0)
+        if (~right & 1)
         {
-            result = combineFcn(result, tree[leafRight]);
+            rightValue = combineFcn(tree[right], rightValue);
         }
 
-        leafLeft = parent(leafLeft + 1);
-        leafRight = parent(leafRight - 1);
+        left = parent(left + 1);
+        right = parent(right - 1);
     }
 
-    return result;
+    return combineFcn(leftValue, rightValue);
 }
 
 template <typename T>
