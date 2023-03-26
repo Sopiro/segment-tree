@@ -17,6 +17,13 @@ int Combine(int a, int b)
     return a + b;
 }
 
+/*
+                 36
+          20            16
+      13      7      9      7
+    5    8  4   3  7   2  1   6
+*/
+
 TEST_CASE("Initialize 1")
 {
     int data[8] = { 5, 8, 4, 3, 7, 2, 1, 6 };
@@ -135,6 +142,7 @@ TEST_CASE("Query")
     REQUIRE_EQ(tree.Query(1, 7), 25);
     REQUIRE_EQ(tree.Query(0, 7), 30);
     REQUIRE_EQ(tree.Query(3, 4), 3);
+    REQUIRE_EQ(tree.Query(2, 6), 16);
 }
 
 TEST_CASE("Insert 1")
