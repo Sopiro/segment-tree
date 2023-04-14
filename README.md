@@ -5,6 +5,12 @@ Templated segment tree implementaion in C++
 ## Example
 
 ```c++
+
+int Combine(int a, int b)
+{
+    return a + b;
+}
+
 int main()
 {
     int data[8] = { 5, 8, 4, 3, 7, 2, 1, 6 };
