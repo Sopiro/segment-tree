@@ -4,14 +4,10 @@
 #include <cmath>
 #include <span>
 
-#define left(i) (2 * i)
-#define right(i) (2 * i + 1)
-#define parent(i) ((i) / 2)
-
 inline size_t compute_size(size_t n)
 {
-    size_t exp = static_cast<size_t>(log2(n - 1)) + 2;
-    return static_cast<size_t>(pow(2, exp));
+    size_t exp = size_t(std::log2(n - 1)) + 2;
+    return size_t(std::pow(2, exp));
 }
 
 // Templated class implementation of a segment tree,
@@ -41,6 +37,7 @@ public:
     size_t GetCount() const;
     const T* GetTree() const;
     size_t GetTreeSize() const;
+    T GetNoneValue() const;
 
 private:
     // Internal tree array
@@ -57,16 +54,16 @@ private:
     // Size of the segment tree array
     size_t size;
 
-    // Default value for uninitialized elements in the tree
-    T noneValue;
+    size_t GetLeft(size_t i) const;
+    size_t GetRight(size_t i) const;
+    size_t GetParent(size_t i) const;
 };
 
 template <typename T>
-inline SegmentTree<T>::SegmentTree(std::span<T> _data, Combine* _combineFcn, T _noneValue)
-    : combineFcn{ _combineFcn }
-    , count{ _data.size() }
-    , size{ compute_size(_data.size()) }
-    , noneValue{ _noneValue }
+inline SegmentTree<T>::SegmentTree(std::span<T> data, Combine* combineFcn, T noneValue)
+    : combineFcn{ combineFcn }
+    , count{ data.size() }
+    , size{ compute_size(data.size()) }
 {
     tree = new T[size];
     tree[0] = noneValue;
@@ -76,7 +73,7 @@ inline SegmentTree<T>::SegmentTree(std::span<T> _data, Combine* _combineFcn, T _
 
     for (; i < count; ++i)
     {
-        tree[mid + i] = _data[i];
+        tree[mid + i] = data[i];
     }
 
     for (i += mid; i < size; ++i)
@@ -87,17 +84,16 @@ inline SegmentTree<T>::SegmentTree(std::span<T> _data, Combine* _combineFcn, T _
     i = mid - 1;
     while (i > 0)
     {
-        tree[i] = combineFcn(tree[left(i)], tree[right(i)]);
+        tree[i] = combineFcn(tree[GetLeft(i)], tree[GetRight(i)]);
         --i;
     }
 }
 
 template <typename T>
-inline SegmentTree<T>::SegmentTree(std::initializer_list<T> _data, Combine* _combineFcn, T _noneValue)
-    : combineFcn{ _combineFcn }
-    , count{ _data.size() }
-    , size{ compute_size(_data.size()) }
-    , noneValue{ _noneValue }
+inline SegmentTree<T>::SegmentTree(std::initializer_list<T> data, Combine* combineFcn, T noneValue)
+    : combineFcn{ combineFcn }
+    , count{ data.size() }
+    , size{ compute_size(data.size()) }
 {
     tree = new T[size];
     tree[0] = noneValue;
@@ -107,7 +103,7 @@ inline SegmentTree<T>::SegmentTree(std::initializer_list<T> _data, Combine* _com
 
     for (; i < count; ++i)
     {
-        tree[mid + i] = *(_data.begin() + i);
+        tree[mid + i] = *(data.begin() + i);
     }
 
     for (i += mid; i < size; ++i)
@@ -118,7 +114,7 @@ inline SegmentTree<T>::SegmentTree(std::initializer_list<T> _data, Combine* _com
     i = mid - 1;
     while (i > 0)
     {
-        tree[i] = combineFcn(tree[left(i)], tree[right(i)]);
+        tree[i] = combineFcn(tree[GetLeft(i)], tree[GetRight(i)]);
         --i;
     }
 }
@@ -135,7 +131,6 @@ inline SegmentTree<T>::SegmentTree(const SegmentTree& other)
     combineFcn = other.combineFcn;
     count = other.count;
     size = other.size;
-    noneValue = other.noneValue;
 
     tree = new T[size];
     memcpy(tree, other.tree, size * sizeof(T));
@@ -151,7 +146,6 @@ inline SegmentTree<T>& SegmentTree<T>::operator=(const SegmentTree& other)
         combineFcn = other.combineFcn;
         count = other.count;
         size = other.size;
-        noneValue = other.noneValue;
 
         tree = new T[size];
         memcpy(tree, other.tree, size * sizeof(T));
@@ -167,7 +161,6 @@ inline SegmentTree<T>::SegmentTree(SegmentTree&& other) noexcept
     combineFcn = other.combineFcn;
     count = other.count;
     size = other.size;
-    noneValue = other.noneValue;
 
     other.tree = nullptr;
     other.combineFcn = nullptr;
@@ -186,7 +179,6 @@ inline SegmentTree<T>& SegmentTree<T>::operator=(SegmentTree&& other) noexcept
         combineFcn = other.combineFcn;
         count = other.count;
         size = other.size;
-        noneValue = other.noneValue;
 
         other.tree = nullptr;
         other.combineFcn = nullptr;
@@ -205,8 +197,8 @@ inline T SegmentTree<T>::Query(size_t left, size_t right) const
     left += size / 2;
     right += size / 2 - 1;
 
-    T leftValue = noneValue;
-    T rightValue = noneValue;
+    T leftValue = GetNoneValue();
+    T rightValue = GetNoneValue();
 
     while (left <= right)
     {
@@ -220,8 +212,8 @@ inline T SegmentTree<T>::Query(size_t left, size_t right) const
             rightValue = combineFcn(tree[right], rightValue);
         }
 
-        left = parent(left + 1);
-        right = parent(right - 1);
+        left = GetParent(left + 1);
+        right = GetParent(right - 1);
     }
 
     return combineFcn(leftValue, rightValue);
@@ -236,8 +228,8 @@ inline void SegmentTree<T>::Update(size_t index, T newValue)
 
     while (i > 1)
     {
-        size_t parentIndex = parent(i);
-        tree[parentIndex] = combineFcn(tree[left(parentIndex)], tree[right(parentIndex)]);
+        size_t parentIndex = GetParent(i);
+        tree[parentIndex] = combineFcn(tree[GetLeft(parentIndex)], tree[GetRight(parentIndex)]);
         i = parentIndex;
     }
 }
@@ -251,13 +243,13 @@ inline void SegmentTree<T>::Insert(size_t index, T value)
     {
         T* old = tree;
         tree = new T[size * 2];
-        tree[0] = noneValue;
+        tree[0] = old[0];
 
         memcpy(tree + size, old + size / 2, size / 2 * sizeof(T));
 
         for (size_t i = 0; i < size / 2; ++i)
         {
-            tree[size + size / 2 + i] = noneValue;
+            tree[size + size / 2 + i] = old[0];
         }
 
         delete[] old;
@@ -280,7 +272,7 @@ inline void SegmentTree<T>::Insert(size_t index, T value)
     size_t i = mid - 1;
     while (i > 0)
     {
-        tree[i] = combineFcn(tree[left(i)], tree[right(i)]);
+        tree[i] = combineFcn(tree[GetLeft(i)], tree[GetRight(i)]);
         --i;
     }
 }
@@ -292,13 +284,13 @@ inline void SegmentTree<T>::PushBack(T value)
     {
         T* old = tree;
         tree = new T[size * 2];
-        tree[0] = noneValue;
+        tree[0] = old[0];
 
         memcpy(tree + size, old + size / 2, size / 2 * sizeof(T));
 
         for (size_t i = 0; i < size / 2; ++i)
         {
-            tree[size + size / 2 + i] = noneValue;
+            tree[size + size / 2 + i] = old[0];
         }
 
         delete[] old;
@@ -312,7 +304,7 @@ inline void SegmentTree<T>::PushBack(T value)
         size_t i = mid - 1;
         while (i > 0)
         {
-            tree[i] = combineFcn(tree[left(i)], tree[right(i)]);
+            tree[i] = combineFcn(tree[GetLeft(i)], tree[GetRight(i)]);
             --i;
         }
 
@@ -339,6 +331,30 @@ template <typename T>
 inline size_t SegmentTree<T>::GetTreeSize() const
 {
     return size;
+}
+
+template <typename T>
+inline T SegmentTree<T>::GetNoneValue() const
+{
+    return tree[0];
+}
+
+template <typename T>
+inline size_t SegmentTree<T>::GetLeft(size_t i) const
+{
+    return 2 * i;
+}
+
+template <typename T>
+inline size_t SegmentTree<T>::GetRight(size_t i) const
+{
+    return 2 * i + 1;
+}
+
+template <typename T>
+inline size_t SegmentTree<T>::GetParent(size_t i) const
+{
+    return i / 2;
 }
 
 template <typename T>
